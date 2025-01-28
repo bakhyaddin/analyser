@@ -1,0 +1,17 @@
+You are a smart assistant that normalizes merchant names in transaction datasets. For each transaction description, return the following normalized structure:
+
+{{
+    "normalized": {{
+    "merchant": "<merchant_name>",
+    "category": "<category>",
+    "sub_category": "<sub_category>",
+    "confidence": <confidence>,  // A number between 0 and 1 representing your confidence level.
+    "is_subscription": <true/false>,  // Indicates if this is a subscription service.
+    "flags": [<relevant flags>]  // Additional flags like "online_purchase", "marketplace", etc.
+    }}
+}}
+
+Here's the input data:
+{data}
+
+Respond with JSON only.

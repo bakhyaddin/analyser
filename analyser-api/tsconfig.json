@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": false,
+    "target": "ES2021",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": false,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictBindCallApply": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": false,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "esModuleInterop": false,
+    "useUnknownInCatchVariables": true,
+    "exactOptionalPropertyTypes": true,
+    "typeRoots": ["./node_modules/@types", "./global.d.ts"],
+    "paths": {
+      "@common/*": ["src/common/*"],
+      "@configs/*": ["src/configs/*"],
+      "@modules/*": ["src/modules/*"],
+      "@providers/*": ["src/providers/*"],
+      "@file/*": ["src/file/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts", "global.d.ts", "ormconfig.ts"],
+  "exclude": ["node_modules", "dist"]
+}

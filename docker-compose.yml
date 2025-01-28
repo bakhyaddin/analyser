@@ -1,0 +1,50 @@
+services:
+  normalyser:
+    build:
+      context: ./normalyser
+      target: development
+    command: python3 ./src/main.py
+    networks:
+      - analyser-network
+    env_file:
+      - ./normalyser/.env
+    volumes:
+      - ./normalyser/src:/usr/src/app/src
+      - ./normalyser/rules:/usr/src/app/rules
+
+  analyser-api:
+    build:
+      context: .
+      dockerfile: ./analyser-api/Dockerfile
+      target: development
+    command: pnpm start:dev
+    ports:
+      - 8080:8080
+    networks:
+      - analyser-network
+    env_file:
+      - ./analyser-api/.env
+    depends_on:
+      - normalyser
+      - postgres
+    volumes:
+      - ./analyser-api/src:/usr/src/app/src
+      - ./analyser-api/test:/usr/src/app/test
+
+  postgres:
+    image: postgres:15
+    restart: always
+    ports:
+      - 5432:5432
+    networks:
+      - analyser-network
+    env_file:
+      - ./analyser-api/.env
+    volumes:
+      - analyser-postgres-vol:/var/lib/postgresql/data
+
+volumes:
+  analyser-postgres-vol:
+
+networks:
+  analyser-network:

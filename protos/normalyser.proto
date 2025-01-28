@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package normalyser;
+
+service NormalyserService {
+  rpc normalizeMerchant(TransactionsRequest) returns (NormalisedMerchantsResponse);
+  rpc normalizePattern(TransactionsRequest) returns (NormalisedPatternsResponse);
+}
+
+message Transaction {
+  string date = 1;
+  string description = 2;
+  string amount = 3;
+}
+
+message TransactionsRequest {
+  repeated Transaction transactions = 1;
+}
+
+message NormalisedMerchant {
+  string name = 1;
+  string originalName = 2;
+  string category = 3;
+  string subCategory = 4;
+  float confidence = 5;
+  bool isSubscription = 6;
+  repeated string flags = 7;
+}
+
+message NormalisedMerchantsResponse {
+  repeated NormalisedMerchant normalisedMerchants = 1;
+}
+
+message NormalisedPattern {
+  string type = 1;
+  string merchant = 2;
+  float amount = 3;
+  string frequency = 4;
+  float confidence = 5;
+  string nextExpected = 6;
+  string notes = 7;
+}
+
+message NormalisedPatternsResponse {
+  repeated NormalisedPattern normalisedPatterns = 1;
+}
