@@ -63,8 +63,9 @@ export class S3Service implements FileStorage {
       return response.Body as Readable;
     } catch (err) {
       const errorMessage = (err as S3ServiceException).message;
+      console.log({ errorMessage });
       this.logger.error(errorMessage);
-      throw new ServiceError(`S3 error: ${errorMessage}`);
+      throw new ServiceError(errorMessage);
     }
   }
 

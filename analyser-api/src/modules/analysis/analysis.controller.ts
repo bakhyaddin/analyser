@@ -33,6 +33,6 @@ export class AnalysisController {
 
   @Delete(':id')
   deleteAnalysis(@Param() { id }: DeleteAnalysisDto) {
-    this.service.delete(id);
+    return this.service.delete(id);
   }
 }
