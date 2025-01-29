@@ -56,12 +56,12 @@ class NormalyserServiceServicer(normalyser_pb2_grpc.NormalyserServiceServicer):
             You are a smart assistant that normalizes patterns from transaction datasets. Normalize the given transaction data into the following JSON format:
 
             {{
-                "type": "<type>",  // The type of the transaction. (e.g., "subscription", "transaction" etc.)
+                "type": "<type>",  // The type of the transaction. ("subscription" and "recurring")
                 "merchant": "<merchant_name>",  // The normalized merchant name.
                 "amount": <amount>,  // The transaction amount.
-                "frequency": "<frequency>",  // The transaction frequency. This can obtained by analysing the "transaction_date" in the input data (e.g., "monthly", "one-time", etc.).
+                "frequency": "<frequency>",  // The transaction frequency. This can obtained by analysing the "transaction_date" in the input data (e.g., "monthly", "weekly", "2-3 times per week", "one-time", etc.).
                 "confidence": <confidence>,  // A number between 0 and 1 indicating normalization confidence.
-                "nextExpected": "<nextExpected_date>"  // The next expected transaction date, if applicable. Otherwise lease as "null"
+                "nextExpected": "<nextExpected_date>"  // The next expected transaction date, if applicable. Otherwise leave as null
                 "notes": "<additional_notes>" // Additional notes based on the spending habbits. This can be understood based on transaction amounts and transaction dates 
             }}
 

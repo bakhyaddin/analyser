@@ -1,16 +1,18 @@
 services:
-  normalyser:
-    build:
-      context: ./normalyser
-      target: development
-    command: python3 ./src/main.py
+  proxy:
+    build: ./proxy
+    ports:
+      - "80:80"
     networks:
       - analyser-network
-    env_file:
-      - ./normalyser/.env
-    volumes:
-      - ./normalyser/src:/usr/src/app/src
-      - ./normalyser/rules:/usr/src/app/rules
+    depends_on:
+      - analyser-web
+      - analyser-api
+
+  analyser-web:
+    build: ./analyser-web
+    networks:
+      - analyser-network
 
   analyser-api:
     build:
@@ -30,6 +32,19 @@ services:
     volumes:
       - ./analyser-api/src:/usr/src/app/src
       - ./analyser-api/test:/usr/src/app/test
+
+  normalyser:
+    build:
+      context: ./normalyser
+      target: development
+    command: python3 ./src/main.py
+    networks:
+      - analyser-network
+    env_file:
+      - ./normalyser/.env
+    volumes:
+      - ./normalyser/src:/usr/src/app/src
+      - ./normalyser/rules:/usr/src/app/rules
 
   postgres:
     image: postgres:15

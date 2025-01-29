@@ -23,6 +23,8 @@ async function bootstrap() {
   app.useLogger(app.get(Logger));
   // setup swagger
   swaggerService.setup(app);
+  // setup cors
+  app.enableCors({ origin: '*' });
 
   await app.listen(appConfigService.port);
 }

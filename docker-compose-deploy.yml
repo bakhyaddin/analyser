@@ -1,0 +1,89 @@
+services:
+  proxy:
+    build: ./proxy
+    image: bakhyaddin/analyser-proxy:0.0.2
+    ports:
+      - "80:80"
+    networks:
+      - analyser-network
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints: [node.role == manager]
+
+  analyser-web:
+    build: ./analyser-web
+    image: bakhyaddin/analyser-web:0.0.2
+    networks:
+      - analyser-network
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 2
+        delay: 10s
+
+  analyser-api:
+    build:
+      context: .
+      dockerfile: ./analyser-api/Dockerfile
+    image: bakhyaddin/analyser-api:0.0.2
+    command: sh -c "exec node ./dist/src/main.js"
+    networks:
+      - analyser-network
+    env_file:
+      - .env
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 2
+        delay: 10s
+
+  normalyser:
+    build:
+      context: ./normalyser
+    image: bakhyaddin/analyser-normalyser:0.0.2
+    command: sh -c "exec python3 ./src/main.py"
+    networks:
+      - analyser-network
+    env_file:
+      - .env
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 2
+        delay: 10s
+
+  postgres:
+    image: postgres:15
+    restart: always
+    ports:
+      - 5432:5432
+    networks:
+      - analyser-network
+    env_file:
+      - .env
+    volumes:
+      - analyser-postgres-vol:/var/lib/postgresql/data
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 2
+        delay: 10s
+      placement:
+        constraints: [node.role == manager]
+
+volumes:
+  analyser-postgres-vol:
+
+networks:
+  analyser-network:
