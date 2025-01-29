@@ -20,11 +20,11 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
-        working-directory: ./analyzer-api
+        working-directory: analyser-api
 
       - name: Run unit tests
         run: pnpm test
-        working-directory: ./analyzer-api
+        working-directory: analyser-api
 
       - name: Check test results
         run: |
@@ -34,4 +34,4 @@ jobs:
             echo "Tests failed. Blocking PR merge."
             exit 1
           fi
-        working-directory: ./analyzer-api
+        working-directory: analyser-api
