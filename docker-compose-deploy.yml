@@ -30,7 +30,7 @@ services:
     build:
       context: .
       dockerfile: ./analyser-api/Dockerfile
-    image: bakhyaddin/analyser-api:0.0.2
+    image: bakhyaddin/analyser-api:0.0.3
     command: sh -c "exec node ./dist/src/main.js"
     networks:
       - analyser-network

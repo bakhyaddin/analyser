@@ -30,6 +30,8 @@ export class Pattern extends AbstractEntity<Pattern> {
   nextExpected?: ISODate | null;
 
   @JoinColumn()
-  @ManyToOne(() => Analysis, (analysis) => analysis.patterns)
+  @ManyToOne(() => Analysis, (analysis) => analysis.patterns, {
+    onDelete: 'CASCADE',
+  })
   analysis: Analysis;
 }

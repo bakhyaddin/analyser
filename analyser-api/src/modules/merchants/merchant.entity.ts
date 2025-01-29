@@ -33,6 +33,8 @@ export class Merchant extends AbstractEntity<Merchant> {
   flags: string[];
 
   @JoinColumn()
-  @ManyToOne(() => Analysis, (analysis) => analysis.merchants)
+  @ManyToOne(() => Analysis, (analysis) => analysis.merchants, {
+    onDelete: 'CASCADE',
+  })
   analysis: Analysis;
 }
