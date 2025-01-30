@@ -7,36 +7,84 @@ from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 
 class NormalyserServiceServicer(normalyser_pb2_grpc.NormalyserServiceServicer):
+    def transactions_to_dict(self, transactions):
+        return [
+            {
+                "date": transaction.date,
+                "description": transaction.description,
+                "amount": transaction.amount
+            }
+            for transaction in transactions
+        ]
+
+
     def normalizeMerchant(self, request, context):
         chat = ChatOpenAI()
         prompt_template = ChatPromptTemplate.from_template(
             """
-            You are a smart assistant that normalizes merchant data. Normalize the given transaction history data into the following JSON format:
+            You are given a list of banking transactions in JSON format, for example:
+            [
             {{
-                "name": "<merchant_name>",
-                "originalName": "<merchant_name>" // Extract original name out of the input data
-                "category": "<category>",
-                "subCategory": "<sub_category>",
-                "confidence": <confidence>,  // A number between 0 and 1 representing your confidence level.
-                "isSubscription": <true/false>,  // Indicates if this is a subscription service.
-                "flags": [<relevant flags>]  // Additional flags like "online_purchase", "marketplace" relevant to the merchant.
-            }}
-            Transactions data is as the following. the structure is -> transaction_date, merchant_unnormalized_name, trasaction_amount:
+                "date": "2024-01-01",
+                "description": "NFLX DIGITAL NTFLX US",
+                "amount": 19.99
+            }},
+            {{
+                "date": "2024-01-05",
+                "description": "AMZN MKTP US*Y789XYZ",
+                "amount": 89.97
+            }},
+            ...
+            ]
+
+            Each transaction has:
+            - "date": in YYYY-MM-DD format
+            - "description": the raw text for the merchant
+            - "amount": a float
+
+            **Task**:
+
+            1. For each unique merchant (based on the logic below), generate exactly one JSON object with:
+            - name: a concise merchant name (e.g., "Netflix", "Amazon", "Uber") derived from the transaction description
+            - originalName: the exact 'description' string that led you to this merchant
+            - category: a broad category (e.g. "Shopping", "Entertainment", "Food & Beverage")
+            - subCategory: a more specific sub-category (e.g. "Online Retail", "Streaming", "Rideshare")
+            - confidence: a float in [0,1] indicating your confidence in the classification
+            - isSubscription: true/false
+            - flags: a list of relevant flags (e.g., ["online_purchase", "digital_service", "marketplace"])
+
+            2. **Unifying vs. Distinguishing Merchants**:
+            - Sometimes a single brand may appear under slightly different raw descriptions. If the descriptions clearly belong to the same merchant (e.g., recognizable brand keywords, same brand name in multiple forms), unify them under one "name" and produce one merchant object for all those descriptions.
+            - However, if the description includes a platform/aggregator plus a distinct business or brand (e.g., "XYZ Delivery*RestaurantA" vs. "XYZ Delivery*RestaurantB"), these should remain separate merchant objects because they reference different end merchants.
+
+            3. **Determine 'isSubscription'**:
+            - If the pattern of dates AND the known business clearly indicates a recurring subscription, set 'isSubscription' to true.
+            - Specifically:
+                - Check if charges occur at regular intervals (e.g. same or close amounts, spaced roughly monthly or weekly).
+                - If the brand is known to be subscription-based (e.g. "Netflix", "Spotify", "Hulu", etc.), that's a strong indicator.
+                - Otherwise, set 'isSubscription' to false.
+
+            4. **Determine 'flags'** (Array of strings):
+            - Based on your knowledge of the merchants, provide relevant flags.
+            - The flags can reflect online purchases, digital services, marketplaces, subscriptions, etc.
+
+            **Important**:
+            - Produce exactly ONE JSON array at the end, containing one object per merchant (after unifying or separating appropriately).
+            - Each object includes the fields mentioned above.
+            - Do not produce any extra text; output only valid JSON.
+            - If you see repeated transactions that should unify under the same merchant, merge them into a single object. If they should remain distinct, produce separate objects.
+
+            Now, here is the ENTIRE transactions list in JSON:
             {data}
 
-            Generate JSON output for each transaction, aligning with the described format. Respond with an array of normalized objects.
-            Merchant names must be unique!!
+            **Please** output a JSON array of normalized merchant objects, one per merchant.
             """
         )
 
-        input_data = "\n".join(
-            f"{transaction.date}, {transaction.description}, {transaction.amount}" for transaction in request.transactions
-        )
-
+        input_data = json.dumps(self.transactions_to_dict(request.transactions))
         prompt = prompt_template.format(data=input_data)
         original_response = chat(prompt)
         parsed_response = json.loads(original_response.content)
-        # parsed_response =  [{'name': 'Netflix', 'category': 'Streaming Services', 'subCategory': '', 'confidence': 1, 'isSubscription': True, 'flags': []}, {'name': 'Amazon', 'category': 'Retail', 'subCategory': 'Online Marketplace', 'confidence': 1, 'isSubscription': False, 'flags': ['online_purchase', 'marketplace']}, {'name': 'Uber', 'category': 'Transportation', 'subCategory': 'Ride Sharing', 'confidence': 1, 'isSubscription': False, 'flags': []}, {'name': 'Spotify', 'category': 'Streaming Services', 'subCategory': 'Music', 'confidence': 1, 'isSubscription': True, 'flags': []}, {'name': 'Thai Spice', 'category': 'Dining', 'subCategory': 'Restaurant', 'confidence': 1, 'isSubscription': False, 'flags': []}]
 
         print("PARCED MERCHANT RESPONSE", parsed_response)
 
@@ -53,33 +101,82 @@ class NormalyserServiceServicer(normalyser_pb2_grpc.NormalyserServiceServicer):
         chat = ChatOpenAI()
         prompt_template = ChatPromptTemplate.from_template(
             """
-            You are a smart assistant that normalizes patterns from transaction datasets. Normalize the given transaction data into the following JSON format:
-
+            You are given a list of banking transactions in JSON format, for example:
+            [
             {{
-                "type": "<type>",  // The type of the transaction. ("subscription" and "recurring")
-                "merchant": "<merchant_name>",  // The normalized merchant name.
-                "amount": <amount>,  // The transaction amount.
-                "frequency": "<frequency>",  // The transaction frequency. This can obtained by analysing the "transaction_date" in the input data (e.g., "monthly", "weekly", "2-3 times per week", "one-time", etc.).
-                "confidence": <confidence>,  // A number between 0 and 1 indicating normalization confidence.
-                "nextExpected": "<nextExpected_date>"  // The next expected transaction date, if applicable. Otherwise leave as null
-                "notes": "<additional_notes>" // Additional notes based on the spending habbits. This can be understood based on transaction amounts and transaction dates 
-            }}
+                "date": "2024-01-01",
+                "description": "NFLX DIGITAL NTFLX US",
+                "amount": 19.99
+            }},
+            {{
+                "date": "2024-01-05",
+                "description": "AMZN MKTP US*Y789XYZ",
+                "amount": 89.97
+            }},
+            ...
+            ]
 
-            Transactions data is as the following. the structure is -> transaction_date, merchant_unnormalized_name, trasaction_amount:
+            Each transaction has:
+            - "date": in YYYY-MM-DD format
+            - "description": the raw text for the merchant
+            - "amount": a float
+
+            For each unique merchant (based on the logic below), generate exactly one JSON object with:
+                - type: subscription", "recurring", or "one-time
+                - merchant: a concise merchant name (e.g., "Netflix", "Amazon", "Uber") derived from the transaction description
+                - amount: the exact transaction amount
+                - frequency: e.g., "monthly", "weekly", "2-3 times per week", "one-time", etc.
+                - confidence: a float in [0,1] indicating your confidence in the classification
+                - nextExpected: next likely charge date if relevant, else null
+                - notes: additional insights about spending habits or patterns
+
+            **Classification Rules**:
+            1. **type**:
+            - "subscription": If the merchant is known for subscription-based services (e.g., Netflix, Spotify, Apple) 
+                OR if repeated charges occur at regular intervals (monthly, weekly, same day each month) 
+                for the same merchant + same (or nearly the same) amount.
+            - "recurring": If the user makes frequent purchases from the same merchant (e.g., daily coffee, daily rideshare), 
+                but it’s not a subscription service. 
+            - "one-time": If the transaction does not belong to a subscription or recurring pattern.
+
+            2. **merchant**:
+            - Provide a concise, normalized name. 
+            - If multiple raw descriptions clearly map to the same brand, unify them. 
+            - However, if an aggregator (e.g., "DOORDASH*SUBWAY" vs "DOORDASH*MCDONALDS") 
+                references different end merchants, keep them separate.
+
+            3. **frequency**:
+            - Determine the approximate frequency of the transactions for that merchant 
+                (e.g., "monthly", "weekly", "2-3 times per week", "one-time", etc.).
+            - If there’s only one transaction for that merchant, it’s likely "one-time".
+            - If you detect a monthly or weekly pattern, specify "monthly" or "weekly".
+
+            4. **confidence**:
+            - A float (0 to 1) indicating how sure you are of this classification.
+
+            5. **nextExpected**:
+            - If the type is strongly indicated as "subscription", estimate the next date 
+                based on the pattern you observe. If uncertain, set it to null.
+
+            6. **notes**:
+            - Mention any relevant observations regarding spending habits or amounts 
+                (e.g., "User frequently orders rides on weekdays", "Monthly streaming subscription").
+
+            **Important**:
+            - You must respond with an array of JSON objects, **one for each transaction** in the input.
+            - Applying the above classification rules
+            - Do not provide any extra text outside of the valid JSON array.
+
+            Now, here is the ENTIRE transactions list in JSON:
             {data}
 
-            Generate JSON output for each transaction, aligning with the described format. Respond with an array of normalized objects.
             """
         )
 
-        input_data = "\n".join(
-            f"{transaction.date}, {transaction.description}, {transaction.amount}" for transaction in request.transactions
-        )
-
+        input_data = json.dumps(self.transactions_to_dict(request.transactions))
         prompt = prompt_template.format(data=input_data)
         original_response = chat(prompt)
         parsed_response = json.loads(original_response.content)
-        # parsed_response = [{'type': 'subscription', 'merchant': 'Netflix', 'amount': 0.99, 'frequency': 'monthly', 'confidence': 0.9, 'nextExpected': '2024-02-01'}, {'type': 'transaction', 'merchant': 'Amazon', 'amount': 0.97, 'frequency': 'one-time', 'confidence': 0.8, 'nextExpected': ''}, {'type': 'ride', 'merchant': 'Uber', 'amount': 0.50, 'frequency': 'one-time', 'confidence': 0.7, 'nextExpected': ''}, {'type': 'subscription', 'merchant': 'Spotify', 'amount': 0.99, 'frequency': 'monthly', 'confidence': 0.85, 'nextExpected': '2024-02-02'}, {'type': 'transaction', 'merchant': 'Thai Spice', 'amount': 0.15, 'frequency': 'one-time', 'confidence': 0.75, 'nextExpected': ''}]
 
         print("PARCED PATTERN RESPONSE", parsed_response)
 

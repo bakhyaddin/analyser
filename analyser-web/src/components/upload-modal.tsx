@@ -79,7 +79,7 @@ export function UploadModal({
       setTimeout(() => {
         onUploadComplete();
         onClose();
-      }, 2000);
+      }, 500);
     } catch (err) {
       setError("An error occurred during the upload process.");
     } finally {
