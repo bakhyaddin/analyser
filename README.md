@@ -1,12 +1,15 @@
 # Financial Transaction Analysis System
 
 ## **Overview**
+
 This repository contains a **comprehensive financial transaction analysis system** that leverages AI to **normalize merchants and detect transaction patterns**. The system consists of **three core services** working together to process, analyze, and visualize financial transactions.
 
 ## **Architecture**
+
 The system is built with a **modular and scalable microservices architecture**, separating concerns between **API processing, AI-powered normalization, and frontend visualization**. It consists of the following services:
 
 ### **1. Analyser API (`analyser-api`)**
+
 - **Backend service** built with **NestJS**.
 - Handles **user requests**, including:
   - **Listing past analyses.**
@@ -16,6 +19,7 @@ The system is built with a **modular and scalable microservices architecture**, 
 - Acts as the **main orchestrator** by interacting with the **Normalyser service** to fetch AI-generated results.
 
 ### **2. Normalization Service (`normalyser`)**
+
 - **AI-powered gRPC service** built with **Python (gRPC & LangChain)**.
 - Processes raw financial transactions to:
   - **Normalize merchant names, categories, and attributes.**
@@ -24,6 +28,7 @@ The system is built with a **modular and scalable microservices architecture**, 
 - Runs behind **gRPC Secure (gRPCS)** and provides **structured transaction insights** to the `analyser-api`.
 
 ### **3. Frontend Web Application (`analyser-web`)**
+
 - **User-facing frontend** built with **React**.
 - Provides an **interactive dashboard** for:
   - **Uploading transaction files.**
@@ -35,6 +40,7 @@ The system is built with a **modular and scalable microservices architecture**, 
 ---
 
 ## **Workflow**
+
 1. **User uploads a transaction file** via the frontend (`analyser-web`).
 2. The file is sent to the backend (`analyser-api`), which generates an **S3 bucket URL** for upload.
 3. Once uploaded, `analyser-api` triggers the **analysis process**.
@@ -44,9 +50,24 @@ The system is built with a **modular and scalable microservices architecture**, 
 ---
 
 ## **Tech Stack**
-| **Service**       | **Technology Stack**                                      |
-|------------------|----------------------------------------------------------|
-| `analyser-api`  | **NestJS**, **PostgreSQL**, **TypeORM**, **S3 (for file storage)** |
-| `normalyser`    | **Python**, **gRPC**, **LangChain**, **ChatOpenAI**        |
-| `analyser-web`  | **React**, **Vite**, **TailwindCSS**, **REST API Integration** |
 
+| **Service**    | **Technology Stack**                                               |
+| -------------- | ------------------------------------------------------------------ |
+| `analyser-api` | **NestJS**, **PostgreSQL**, **TypeORM**, **S3 (for file storage)** |
+| `normalyser`   | **Python**, **gRPC**, **LangChain**, **ChatOpenAI**                |
+| `analyser-web` | **React**, **Vite**, **TailwindCSS**, **REST API Integration**     |
+
+---
+
+## **Deployment**
+
+This system is deployed on **DigitalOcean** using **Docker Swarm** for orchestration.
+
+### Infrastructure Overview
+
+- Platform: DigitalOcean
+- Orchestration: Docker Swarm
+- Nodes:
+  - 1 Master Node
+  - 2 Worker Nodes
+- Networking: No SSL or domain, services are accessed via plain **IP**.
